@@ -1,0 +1,28 @@
+{% extends "dashboard/base.html" %}
+
+{% block content %}
+<h2>Email Drafts</h2>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Company</th>
+            <th>Subject</th>
+            <th>Status</th>
+            <th>Created</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for draft in drafts %}
+        <tr>
+            <td>{{ draft.lead.company_name }}</td>
+            <td>{{ draft.subject }}</td>
+            <td>{{ draft.status }}</td>
+            <td>{{ draft.created_at }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4">No drafts yet</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,7 +1,5 @@
 from django.db import models
 
-# Create your models here.
-
 
 class Lead(models.Model):
     STATUS_CHOICES = [
@@ -27,3 +25,18 @@ class Lead(models.Model):
 
     def __str__(self):
         return f"{self.company_name} ({self.lead_score})"
+
+
+# 🔽 ADD THIS MODEL (THIS WAS MISSING)
+class EmailDraft(models.Model):
+    lead = models.ForeignKey(
+        Lead,
+        on_delete=models.CASCADE,
+        related_name="email_drafts"
+    )
+    subject = models.CharField(max_length=255)
+    body = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Email draft for {self.lead.company_name}"

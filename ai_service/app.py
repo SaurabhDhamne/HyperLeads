@@ -10,6 +10,23 @@ genai.configure(
     api_key=os.getenv("GEMINI_API_KEY")
 )
 
+# cold email generator 
+def generate_email_with_gemini(company, industry, keywords):
+    prompt = f"""
+    You are a B2B sales assistant.
+
+    Write a short, professional cold email for a company named {company}
+    operating in the {industry} space.
+
+    Mention these keywords naturally: {", ".join(keywords)}.
+    Tone: professional, friendly, non-pushy.
+    Length: 80-120 words.
+    """
+
+    model = genai.GenerativeModel("gemini-2.5-flash-lite")
+    response = model.generate_content(prompt)
+
+    return response.text.strip()
 
 # keywords for NLP to score
 import spacy
@@ -36,6 +53,25 @@ def extract_keywords(text):
 
 
 app = Flask(__name__)
+# route for email generator
+@app.route("/generate-email", methods=["POST"])
+def generate_email_api():
+    data = request.json
+
+    email_text = generate_email_with_gemini(
+        company=data["company_name"],
+        industry=data["industry"],
+        keywords=data.get("keywords", [])
+    )
+
+    if not email_text:
+        return jsonify({
+            "error": "LLM quota exceeded or service unavailable"
+        }), 503
+
+    return jsonify({"email": email_text})
+
+
 
 @app.route("/health", methods=["GET"])
 def health():

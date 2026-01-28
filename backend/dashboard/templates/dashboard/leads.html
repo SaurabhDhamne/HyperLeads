@@ -1,0 +1,35 @@
+{% extends "dashboard/base.html" %}
+
+{% block content %}
+<h3>Leads</h3>
+
+<table class="table table-bordered table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>Company</th>
+            <th>Email</th>
+            <th>Industry</th>
+            <th>Score</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for lead in leads %}
+        <tr>
+            <td>{{ lead.company_name }}</td>
+            <td>{{ lead.email }}</td>
+            <td>{{ lead.industry }}</td>
+            <td>{{ lead.lead_score }}</td>
+            <td>{{ lead.status }}</td>
+            <td>
+                <form method="post" action="/api/leads/{{ lead.id }}/generate-email/">
+                    {% csrf_token %}
+                    <button class="btn btn-sm btn-primary">Generate Email</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
