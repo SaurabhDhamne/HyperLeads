@@ -22,10 +22,17 @@
             <td>{{ lead.industry }}</td>
             <td>{{ lead.lead_score }}</td>
             <td>{{ lead.status }}</td>
-            <td>
+            <td class="d-flex gap-2">
+                <a href="{% url 'lead_detail' lead.id %}" class="btn btn-sm btn-outline-dark">
+                    View
+                </a>
+
+                    <!-- Generate Email -->
                 <form method="post" action="/api/leads/{{ lead.id }}/generate-email/">
-                    {% csrf_token %}
-                    <button class="btn btn-sm btn-primary">Generate Email</button>
+                      {% csrf_token %}
+                    <button class="btn btn-sm btn-primary">
+                         Generate Email
+                    </button>
                 </form>
             </td>
         </tr>

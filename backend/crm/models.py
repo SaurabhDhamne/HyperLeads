@@ -1,7 +1,35 @@
 from django.db import models
 
+# lead Source model
+class LeadSource(models.Model):
+    SOURCE_TYPES = [
+        ("ADS", "Ads"),
+        ("SCRAPER", "Scraper"),
+        ("SHEET", "Google Sheet"),
+        ("MANUAL", "Manual"),
+        ("WEBHOOK", "Webhook"),
+    ]
+
+    name = models.CharField(max_length=255)   # e.g. "Google Ads – SaaS"
+    source_type = models.CharField(max_length=20, choices=SOURCE_TYPES)
+    platform = models.CharField(max_length=100, blank=True, null=True)
+    campaign = models.CharField(max_length=255, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.source_type})"
+
+
 
 class Lead(models.Model):
+
+    lead_source = models.ForeignKey(
+        LeadSource,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    
     STATUS_CHOICES = [
         ("NEW", "New"),
         ("CONTACTED", "Contacted"),
@@ -20,14 +48,20 @@ class Lead(models.Model):
         choices=STATUS_CHOICES,
         default="NEW"
     )
-
+    source = models.ForeignKey(
+        LeadSource,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="leads"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.company_name} ({self.lead_score})"
 
 
-# 🔽 ADD THIS MODEL (THIS WAS MISSING)
+# Email draft model
 class EmailDraft(models.Model):
     lead = models.ForeignKey(
         Lead,
@@ -40,3 +74,4 @@ class EmailDraft(models.Model):
 
     def __str__(self):
         return f"Email draft for {self.lead.company_name}"
+

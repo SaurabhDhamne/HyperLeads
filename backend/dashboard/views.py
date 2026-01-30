@@ -9,6 +9,18 @@ def leads_view(request):
     return render(request, "dashboard/leads.html", {"leads": leads})
 
 
+def lead_detail_view(request, lead_id):
+    lead = Lead.objects.get(id=lead_id)
+    emails = EmailDraft.objects.filter(lead=lead).order_by("-created_at")
+
+    return render(
+        request,
+        "dashboard/lead_detail.html",
+        {
+            "lead": lead,
+            "emails": emails
+        }
+    )
 
 
 

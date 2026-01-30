@@ -1,0 +1,21 @@
+<h2>{{ lead.company_name }}</h2>
+
+<p><b>Email:</b> {{ lead.email }}</p>
+<p><b>Industry:</b> {{ lead.industry }}</p>
+<p><b>Source:</b> {{ lead.lead_source }}</p>
+<p><b>Score:</b> {{ lead.lead_score }}</p>
+<p><b>Status:</b> {{ lead.status }}</p>
+
+<hr>
+
+<h3>Email Drafts</h3>
+
+{% for email in emails %}
+  <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px;">
+    <b>{{ email.subject }}</b>
+    <p>{{ email.body }}</p>
+    <small>{{ email.created_at }}</small>
+  </div>
+{% empty %}
+  <p>No email drafts yet.</p>
+{% endfor %}
