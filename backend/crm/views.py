@@ -3,13 +3,60 @@ import requests
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.shortcuts import render, redirect
 
-from .models import Lead, EmailDraft , LeadSource
+from .models import Lead, EmailDraft, LeadSource
+
 
 FLASK_AI_URL = "http://127.0.0.1:5001/score"
 FLASK_EMAIL_URL = "http://127.0.0.1:5001/generate-email"
 
 
+# -----------------------------
+# AI Lead Scoring Helper
+# -----------------------------
+def score_lead(lead):
+    try:
+        ai_response = requests.post(
+            FLASK_AI_URL,
+            json={
+                "industry": lead.industry,
+                "requirement": lead.requirement or ""
+            },
+            timeout=5
+        )
+
+        if ai_response.status_code == 200:
+            lead.lead_score = ai_response.json().get("lead_score", 0)
+            lead.save()
+
+    except Exception as e:
+        print("SCORING ERROR:", e)
+
+
+# -----------------------------
+# Add Lead (Dashboard Form)
+# -----------------------------
+def add_lead(request):
+    if request.method == "POST":
+        lead = Lead.objects.create(
+            company_name=request.POST["company_name"],
+            contact_name=request.POST.get("contact_name", ""),
+            email=request.POST["email"],
+            phone=request.POST.get("phone", ""),
+            industry=request.POST.get("industry", ""),
+            requirement=request.POST.get("requirement", ""),
+        )
+
+        score_lead(lead)
+        return redirect("leads")
+
+    return render(request, "dashboard/add_lead.html")
+
+
+# -----------------------------
+# Generate AI Email
+# -----------------------------
 @csrf_exempt
 def generate_email(request, lead_id):
     if request.method != "POST":
@@ -35,9 +82,8 @@ def generate_email(request, lead_id):
             status=503
         )
 
-    # ✅ THIS MUST BE OUTSIDE THE IF
     data = ai_response.json()
-    email_body = data.get("email")
+    email_body = data.get("email", "")
 
     EmailDraft.objects.create(
         lead=lead,
@@ -52,53 +98,54 @@ def generate_email(request, lead_id):
         }
     )
 
+
+# -----------------------------
+# Google Sheets / API Ingestion
+# -----------------------------
 @csrf_exempt
 def ingest_lead(request):
     if request.method != "POST":
         return JsonResponse({"error": "Invalid method"}, status=405)
 
-    data = json.loads(request.body)
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except Exception:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
 
-    # 1️⃣ Create or get source
-    source_data = data.get("source", {})
-    source, _ = LeadSource.objects.get_or_create(
-        name=source_data.get("name", "Unknown Source"),
-        defaults={
-            "source_type": source_data.get("type", "MANUAL"),
-            "platform": source_data.get("platform"),
-            "campaign": source_data.get("campaign"),
-        }
-    )
+    leads_data = payload if isinstance(payload, list) else [payload]
+    created_leads = []
 
-    # 2️⃣ Create lead
-    lead = Lead.objects.create(
-        company_name=data["company_name"],
-        email=data["email"],
-        website=data.get("website"),
-        industry=data.get("industry", "Unknown"),
-        source=source
-    )
+    for data in leads_data:
+        source_name = data.get("source", "Google Sheets")
 
-    # 3️⃣ AI scoring
-    ai_response = requests.post(
-        FLASK_AI_URL,
-        json={
-            "industry": lead.industry,
-            "website_text": lead.website or ""
-        }
-    )
+        source, _ = LeadSource.objects.get_or_create(
+            name=source_name,
+            defaults={"source_type": "SHEET"}
+        )
 
-    if ai_response.status_code == 200:
-        lead.lead_score = ai_response.json()["lead_score"]
-        lead.save()
+        lead = Lead.objects.create(
+            company_name=data.get("company_name", ""),
+            contact_name=data.get("contact_name", ""),
+            email=data.get("email"),
+            phone=data.get("phone", ""),
+            industry=data.get("industry", ""),
+            requirement=data.get("requirement", ""),
+            lead_source=source
+        )
+
+        score_lead(lead)
+        created_leads.append(lead.id)
 
     return JsonResponse({
-        "message": "Lead ingested successfully",
-        "lead_id": lead.id,
-        "lead_score": lead.lead_score
+        "message": "Leads ingested successfully",
+        "count": len(created_leads),
+        "lead_ids": created_leads
     })
 
 
+# -----------------------------
+# API-based Lead Creation
+# -----------------------------
 @csrf_exempt
 def create_lead(request):
     if request.method != "POST":
@@ -113,17 +160,7 @@ def create_lead(request):
         industry=data["industry"]
     )
 
-    ai_response = requests.post(
-        FLASK_AI_URL,
-        json={
-            "industry": lead.industry,
-            "website_text": lead.website or ""
-        }
-    )
-
-    ai_data = ai_response.json()
-    lead.lead_score = ai_data["lead_score"]
-    lead.save()
+    score_lead(lead)
 
     return JsonResponse(
         {

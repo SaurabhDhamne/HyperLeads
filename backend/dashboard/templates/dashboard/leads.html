@@ -2,6 +2,10 @@
 
 {% block content %}
 <h3>Leads</h3>
+<a href="{% url 'add_lead' %}" class="btn btn-success mb-3">
+    ➕ Add Lead
+</a>
+
 
 <table class="table table-bordered table-hover">
     <thead class="table-dark">
@@ -10,6 +14,7 @@
             <th>Email</th>
             <th>Industry</th>
             <th>Score</th>
+            <th>Source</th>
             <th>Status</th>
             <th>Action</th>
         </tr>
@@ -17,26 +22,45 @@
     <tbody>
         {% for lead in leads %}
         <tr>
-            <td>{{ lead.company_name }}</td>
-            <td>{{ lead.email }}</td>
-            <td>{{ lead.industry }}</td>
-            <td>{{ lead.lead_score }}</td>
-            <td>{{ lead.status }}</td>
-            <td class="d-flex gap-2">
-                <a href="{% url 'lead_detail' lead.id %}" class="btn btn-sm btn-outline-dark">
-                    View
-                </a>
-
-                    <!-- Generate Email -->
+            <td>
+                <strong>{{ lead.company_name }}</strong><br>
+                
+            </td>
+            <td><small class="text-muted">{{ lead.email }}</small></td>
+            <td>{{ lead.industry|default:"—" }}</td>
+        
+            <td>
+                {% if lead.lead_score >= 80 %}
+                    <span class="badge bg-danger">🔥 Hot</span>
+                {% elif lead.lead_score >= 50 %}
+                    <span class="badge bg-warning text-dark">🟡 Warm</span>
+                {% else %}
+                    <span class="badge bg-secondary">❄️ Cold</span>
+                {% endif %}
+                <small>({{ lead.lead_score }})</small>
+            </td>
+        
+            <td>
+                <span class="badge bg-info">
+                    {{ lead.lead_source.name|default:"Manual" }}
+                </span>
+            </td>
+        
+            <td>
+                <span class="badge bg-dark">{{ lead.status }}</span>
+            </td>
+        
+            <td>
                 <form method="post" action="/api/leads/{{ lead.id }}/generate-email/">
-                      {% csrf_token %}
-                    <button class="btn btn-sm btn-primary">
-                         Generate Email
+                    {% csrf_token %}
+                    <button class="btn btn-sm btn-outline-primary">
+                        ✉ Generate Email
                     </button>
                 </form>
             </td>
         </tr>
         {% endfor %}
-    </tbody>
+</tbody>
+
 </table>
 {% endblock %}

@@ -23,13 +23,6 @@ class LeadSource(models.Model):
 
 class Lead(models.Model):
 
-    lead_source = models.ForeignKey(
-        LeadSource,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True
-    )
-    
     STATUS_CHOICES = [
         ("NEW", "New"),
         ("CONTACTED", "Contacted"),
@@ -37,9 +30,23 @@ class Lead(models.Model):
     ]
 
     company_name = models.CharField(max_length=255)
+    contact_name = models.CharField(max_length=255, blank=True)
+
     email = models.EmailField(unique=True)
-    website = models.URLField(blank=True, null=True)
-    industry = models.CharField(max_length=100)
+    phone = models.CharField(max_length=20, blank=True)
+
+    industry = models.CharField(max_length=100, blank=True)
+    location = models.CharField(max_length=100, blank=True)
+
+    requirement = models.TextField(blank=True)
+
+    lead_source = models.ForeignKey(
+        LeadSource,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="leads"
+    )
 
     lead_score = models.IntegerField(default=0)
 
@@ -48,17 +55,12 @@ class Lead(models.Model):
         choices=STATUS_CHOICES,
         default="NEW"
     )
-    source = models.ForeignKey(
-        LeadSource,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="leads"
-    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.company_name} ({self.lead_score})"
+        return f"{self.company_name} | {self.status} | Score: {self.lead_score}"
+                                            
 
 
 # Email draft model
