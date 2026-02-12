@@ -1,1 +1,1 @@
-web: gunicorn hyperleads.wsgi
+web: gunicorn backend.wsgi
