@@ -8,8 +8,8 @@ from django.shortcuts import render, redirect
 from .models import Lead, EmailDraft, LeadSource
 
 
-FLASK_AI_URL = "http://127.0.0.1:5001/score"
-FLASK_EMAIL_URL = "http://127.0.0.1:5001/generate-email"
+FLASK_AI_URL = "https://hyperleads-ai.up.railway.app/score"
+FLASK_EMAIL_URL = "https://hyperleads-ai.up.railway.app/generate-email"
 
 
 # -----------------------------
