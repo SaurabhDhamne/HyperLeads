@@ -26,8 +26,11 @@ def score_lead(lead):
             timeout=5
         )
 
+        print("AI STATUS:", ai_response.status_code)
+        print("AI RESPONSE:", ai_response.text)
         if ai_response.status_code == 200:
-            lead.lead_score = ai_response.json().get("lead_score", 0)
+            data = ai_response.json()
+            lead.lead_score = data.get("lead_score", 0)
             lead.save()
 
     except Exception as e:
@@ -157,7 +160,9 @@ def create_lead(request):
         company_name=data["company_name"],
         email=data["email"],
         website=data.get("website", ""),
-        industry=data["industry"]
+        industry=data["industry"],
+        requirement=data.get("requirement", "")
+
     )
 
     score_lead(lead)
